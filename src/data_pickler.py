@@ -23,13 +23,8 @@ def clean(line):
 
 data['posts'] = data['posts'].apply(clean)
 
-data['Introversion'] = data['type'].apply(lambda x: 1 if x[0] == 'I' else 0)
-data['Intuition'] = data['type'].apply(lambda x: 1 if x[1] == 'I' else 0)
-data['Thinking'] = data['type'].apply(lambda x: 1 if x[2] == 'T' else 0)
-data['Judging'] = data['type'].apply(lambda x: 1 if x[3] == 'J' else 0)
-
-data['words_per_post'] = data['posts'].apply(lambda x: len(x.split(' ')))
-data['chars_per_post'] = data['posts'].apply(lambda x: len(x))
+# data['words_per_post'] = data['posts'].apply(lambda x: len(x.split(' ')))
+# data['chars_per_post'] = data['posts'].apply(lambda x: len(x))
 
 with open('mbti_1_vocab.pickle', 'wb') as file:
 	vectorizer = CountVectorizer(max_features=1000)
