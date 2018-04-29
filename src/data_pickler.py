@@ -5,6 +5,7 @@ import pandas as pd
 import string
 
 from sklearn.feature_extraction.text import CountVectorizer
+from collections import Counter
 
 FILE_PATH = "mbti_1.csv"
 
@@ -26,9 +27,14 @@ data['posts'] = data['posts'].apply(clean)
 # data['words_per_post'] = data['posts'].apply(lambda x: len(x.split(' ')))
 # data['chars_per_post'] = data['posts'].apply(lambda x: len(x))
 
-with open('mbti_1_vocab.pickle', 'wb') as file:
-	vectorizer = CountVectorizer(max_features=1000)
-	pickle.dump(vectorizer.fit_transform(data['posts']), file)
+vectorizer = CountVectorizer(max_features=1000)
+vocab = vectorizer.fit_transform(data['posts'])
 
-with open('mbti_1.pickle', 'wb') as file:
-	pickle.dump(data, file)
+with open('mbti_1_vocab.pickle', 'wb') as file:
+	pickle.dump(vocab, file)
+
+with open('mbti_1_word_map.pickle', 'wb') as file:
+	pickle.dump(vectorizer.vocabulary_, file)
+
+# with open('mbti_1.pickle', 'wb') as file:
+# 	pickle.dump(data, file)

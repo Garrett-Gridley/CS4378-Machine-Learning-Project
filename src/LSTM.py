@@ -14,6 +14,18 @@ import time
 
 df = pd.read_pickle('mbti_1.pickle')
 vocab = pd.read_pickle('mbti_1_vocab.pickle')
+word_map = pd.read_pickle('mbti_1_word_map.pickle')
+
+# convert posts to integers
+# word_ints = []
+# for row in df['posts']:
+# 	ints = []
+# 	for word in row.split():
+# 		if word in word_map:
+# 			ints.append(word_map[word])
+# 	word_ints.append(ints)
+
+# word_ints = np.array(word_ints)
 
 # one hot the labels
 labels = df['type']
@@ -47,32 +59,58 @@ test_labels = onehots[split_loc:]
 
 batch_size = 128
 
-model = Sequential()
-model.add(Embedding(train_features.shape[0], 128))
-model.add(LSTM(128))
-model.add(Dense(16, activation='relu'))
-model.compile(loss='categorical_crossentropy',
-			  optimizer='adam',
-			  metrics=['categorical_accuracy'])
 
-model.fit(train_features, train_labels,
-	batch_size=batch_size,
-	epochs=5,
-	validation_data=(test_features, test_labels))
 
-predictions = model.predict(test_features)
-classes = predictions.argmax(axis=-1)
-print(classes)
+if len(sys.argv) > 1 and sys.argv[1] == 'train':
 
-# score,acc = model.evaluate(test_features, test_labels,
-# 	batch_size=batch_size)
+	model = Sequential()
+	model.add(Embedding(train_features.shape[0], 128))
+	model.add(LSTM(128, dropout=0.5, recurrent_dropout=0.5))
+	model.add(Dense(16, activation='relu'))
+	model.compile(loss='categorical_crossentropy',
+				  optimizer='adam',
+				  metrics=['accuracy'])
 
-# print(score, acc)
+	model.fit(train_features, train_labels,
+		batch_size=batch_size,
+		epochs=1,
+		validation_data=(test_features, test_labels))
 
-# ENFP = "Recently, I learned about the mbti types of my family members, and my sister is definitely an ENFP. Which explained so many things she had to go through, aka depression. But the thing is that when she was going through it, I don’t remember that me and my family were aware of it in the first place and I don’t think that we were of a great support to her at that time... and I’m just thankful that she is healthy and alright now. Sooooo....I want to ask you guys how to help an ENFP out of their depression??? What worked for you guys and how did you deal with it??"
+	model.save('keras_LSTM.h5')
+if len(sys.argv) > 1 and sys.argv[1] == 'loss':
+	from keras.models import load_model
+	import matplotlib.pyplot as plt
+	model = load_model('keras_LSTM.h5')
 
-# vectorizer = CountVectorizer(max_features=1000)
-# person = vectorizer.fit_transform([ENFP])
-# print(model.predict(person))
+	print(model.loss)
+	# print(model.__dict__.keys())
+	# plt.plot(model.train_history_['loss'])
+	# plt.plot(model.train_history_['val_loss'])
+	# plt.show()
 
-model.save('keras_LSTM.h5')
+if len(sys.argv) > 1 and sys.argv[1] == 'confuse':
+	from keras.models import load_model 
+	from sklearn.metrics import confusion_matrix
+	from numpy import argmax
+	import matplotlib.pyplot as plt
+
+	model = load_model('keras_LSTM.h5')
+
+
+	actual = df['type'][split_loc:]
+	preds = model.predict(test_features, batch_size=batch_size)
+	classes = [decode[i] for i in preds.argmax(axis=-1)]
+	
+	# print(actual, classes)
+	cm = confusion_matrix(actual, classes)
+
+	plt.figure()
+	plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+	plt.colorbar()
+	plt.show()
+
+else:
+	from keras.models import load_model
+	model = load_model('keras_LSTM.h5')
+	score, acc = model.evaluate(test_features, test_labels, batch_size=batch_size)
+	print(score, acc)
